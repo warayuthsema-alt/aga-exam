@@ -137,6 +137,8 @@ const callApi = (action, args) => new Promise(resolve => {
   const sess = require('../lib/logic').unseal(ex.token);
   assert.ok(sess.qs.filter(q => q.cat === 'การจัดการแมลงสาบ').length >= 6);
   assert.ok(sess.qs.every(q => q.ans >= 0));
+  sess.qs.forEach(q => assert.equal(q.choices[q.ans], 'opt' + ((+q.id) % 4), 'answer follows shuffle'));
+  assert.ok(sess.qs.some(q => q.choices.join() !== 'opt0,opt1,opt2,opt3'), 'choices shuffled');
   const ans = {}; sess.qs.forEach((q, i) => (ans[q.id] = i < 7 ? q.ans : (q.ans + 1) % 4));
   r = await callApi('submit', [ex.token, ans, 2]);
   assert.ok(r.ok, r.error); assert.equal(r.data.score, 7); assert.equal(r.data.pass, false);
