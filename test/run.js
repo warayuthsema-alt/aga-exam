@@ -5,7 +5,8 @@ const Module = require('module');
 // ---- stub google-auth-library ----
 const origLoad = Module._load;
 Module._load = function (req, ...a) {
-  if (req === 'google-auth-library') return { JWT: class { async getAccessToken() { return { token: 't' }; } } };
+  if (req === 'google-auth-library') return { JWT: class { async getAccessToken() { return { token: 't' }; } }, ExternalAccountClient: {} };
+  if (req === '@vercel/oidc') return { getVercelOidcToken: async () => 'x' };
   return origLoad.call(this, req, ...a);
 };
 process.env.GOOGLE_SERVICE_ACCOUNT_JSON = JSON.stringify({ client_email: 'x@y', private_key: 'k' });

@@ -14,7 +14,9 @@ test/run.js       ทดสอบทั้งระบบกับชีตจ�
 ## Environment variables (Vercel → Project → Settings → Environment Variables)
 | ชื่อ | ค่า |
 |---|---|
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | เนื้อหาไฟล์ JSON ของ Service Account ทั้งไฟล์ (ตั้งเป็น Sensitive) |
+| `GCP_WIF_AUDIENCE` | `//iam.googleapis.com/projects/<เลขโปรเจกต์>/locations/global/workloadIdentityPools/vercel/providers/vercel` (เชื่อมแบบไม่ใช้กุญแจผ่าน Vercel OIDC) |
+| `GCP_SERVICE_ACCOUNT_EMAIL` | อีเมล Service Account ที่ได้รับแชร์ชีต |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | (ทางเลือก แทนสองตัวบน) เนื้อหาไฟล์กุญแจ JSON ทั้งไฟล์ ตั้งเป็น Sensitive |
 | `SHEET_ID` | ID ของ Google Sheet คลังข้อสอบ (ส่วนกลางของ URL ชีต) |
 | `SESSION_SECRET` | ข้อความสุ่มยาว ≥ 32 ตัว (ใช้เข้ารหัสรอบสอบ) |
 | `ADMIN_KEY` | ข้อความสุ่มยาว ≥ 16 ตัว (ใช้เรียก /api/setup) |
