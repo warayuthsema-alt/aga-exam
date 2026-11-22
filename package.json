@@ -1,0 +1,9 @@
+{
+  "name": "aga-exam",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ระบบแบบทดสอบมาตรฐานงานบริการ – Advance Group Asia (Vercel + Google Sheets)",
+  "engines": { "node": ">=20" },
+  "dependencies": { "google-auth-library": "^9.15.0" },
+  "scripts": { "test": "node test/run.js" }
+}
