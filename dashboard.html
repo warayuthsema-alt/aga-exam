@@ -51,6 +51,7 @@
   .badge{display:inline-block;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
   .b-high{background:var(--bad-soft);color:var(--bad)} .b-mid{background:var(--warn-soft);color:var(--warn)} .b-low{background:var(--g-soft);color:var(--g)}
   .b-ready{background:var(--ok-soft);color:var(--ok)} .b-near{background:#e0eaff;color:#3538cd} .b-dev{background:#f2f4f7;color:var(--text)}
+  .gap .badge{flex:none;align-self:flex-start;margin-top:2px}
   .gap{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--g-border)} .gap:first-of-type{border-top:0}
   .gap .t{font-weight:600;color:var(--ink)} .gap .a{font-size:14px;color:var(--muted)}
   .ladder{display:flex;align-items:stretch;gap:6px;margin-top:6px}
@@ -220,7 +221,7 @@
   }
 
   const lvlCls = l => (l === 'สูง' ? 'b-high' : l === 'กลาง' ? 'b-mid' : 'b-low');
-  const stCls = s => (s === 'พร้อมเลื่อนขั้น' ? 'b-ready' : s === 'ใกล้พร้อม' ? 'b-near' : 'b-dev');
+  const stCls = s => (s === 'พร้อมเลื่อนขั้น' ? 'b-ready' : s === 'ใกล้พร้อม' ? 'b-near' : s === 'รอข้อมูลประเมิน' ? 'b-mid' : 'b-dev');
 
   function renderBranch() {
     const v = D.branchView, n = v.headcount || 1;
@@ -261,7 +262,7 @@
     const list = D.people.filter(f).filter(p => !q || (p.name + ' ' + p.id + ' ' + p.team).toLowerCase().includes(q));
     $('plist').innerHTML = list.map(p => {
       const i = D.people.indexOf(p);
-      const rd = p.readiness == null ? '' : `<div class="row" style="font-size:13.5px"><span>ไป ${esc(p.nextStage)}</span><div class="bar ${p.status === 'พร้อมเลื่อนขั้น' ? 'ready' : p.status === 'ใกล้พร้อม' ? 'near' : ''}" style="flex:1"><div style="width:${p.readiness}%"></div></div><b class="num">${p.readiness}%</b></div>`;
+      const rd = p.readiness == null ? '' : `<div class="row" style="font-size:13.5px"><span>ไป ${esc(p.nextStage)}</span><div class="bar ${p.status === 'พร้อมเลื่อนขั้น' ? 'ready' : p.status === 'ใกล้พร้อม' ? 'near' : ''}" style="flex:1"><div style="width:${p.readiness}%"></div></div><b class="num">${p.met}/${p.total}</b></div>${p.pending ? `<div class="muted" style="font-size:12.5px">ผ่าน ${p.met} จาก ${p.total} ข้อ · รอข้อมูล ${p.pending} ข้อ</div>` : ''}`;
       const need = p.needs[0] ? `<div class="need1">${esc(p.needs[0].text)}</div>` : '';
       return `<button class="pcard" data-i="${i}"><div class="row"><span class="nm">${esc(p.name)}</span><span class="badge ${stCls(p.status)}">${esc(p.status)}</span>${p.canGrow ? '<span class="badge b-ready">เติบโตได้</span>' : ''}</div>
         <div class="sub">${esc(p.position)} · ทีม ${esc(p.team)} · ${esc(p.tenure)} · Lv.${esc(p.lv)}</div>
@@ -274,7 +275,7 @@
 
   function openPerson(p) {
     const icon = c => (c.ok === true ? '<span class="i y">✓</span>' : c.ok === false ? '<span class="i n">✗</span>' : '<span class="i u">–</span>');
-    const crit = p.criteria.length ? `<h3>เกณฑ์ขึ้นเป็น ${esc(p.nextStage)} · ผ่าน ${p.readiness}%</h3>` + p.criteria.map(c => `<div class="crit">${icon(c)}<span>${esc(c.label)}</span><span class="now">${esc(c.now)}</span></div>`).join('') + (p.missingData ? '<p class="muted">– = ยังไม่มีข้อมูล ประเมินสมรรถนะหรือทำแบบทดสอบเพิ่มเพื่อให้ครบ</p>' : '') : '<h3>อยู่ขั้นสูงสุดของเส้นทาง</h3>';
+    const crit = p.criteria.length ? `<h3>เกณฑ์ขึ้นเป็น ${esc(p.nextStage)} · ผ่าน ${p.met} จาก ${p.total} ข้อ</h3>` + p.criteria.map(c => `<div class="crit">${icon(c)}<span>${esc(c.label)}</span><span class="now">${esc(c.now)}</span></div>`).join('') + (p.missingData ? '<p class="muted">– = ยังไม่มีข้อมูล ประเมินสมรรถนะหรือทำแบบทดสอบเพิ่มเพื่อให้ครบ</p>' : '') : '<h3>อยู่ขั้นสูงสุดของเส้นทาง</h3>';
     const comps = p.rating ? `<h3>สมรรถนะล่าสุด (${esc(p.rating.date)} · ${esc(p.rating.rater)})</h3>` + D.comps.map(c => { const v = p.rating.scores[c.key]; return `<div class="comp"><span>${esc(c.label)}</span><div class="bar"><div style="width:${(v || 0) / 4 * 100}%;${v && v < 3 ? 'background:var(--o)' : ''}"></div></div><b class="num">${v || '–'}</b></div>`; }).join('') +
       `<p class="muted">เฉลี่ย ${p.rating.avg}${p.rating.prevAvg != null ? ' (ครั้งก่อน ' + p.rating.prevAvg + ')' : ''} · ความต้องการเติบโต: ${esc(p.rating.growth || '-')}${p.rating.strengths ? ' · จุดแข็ง: ' + esc(p.rating.strengths) : ''}</p>` : '<h3>สมรรถนะ</h3><p class="muted">ยังไม่ได้ประเมิน</p>';
     const ex = p.exam;
