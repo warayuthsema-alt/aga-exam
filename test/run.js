@@ -189,6 +189,50 @@ const callApi = (action, args) => new Promise(resolve => {
   assert.equal(r.ok, false);
   r = await callApi('options', [{ empId: '' }]);
   assert.equal(r.ok, false);
+  // ---- แดชบอร์ด OM/Sup ----
+  process.env.DASHBOARD_CODE = 'dash-code-123';
+  const dapi = require('../api/dash');
+  const dcall = (action, args) => new Promise(resolve => {
+    const res = { statusCode: 200, setHeader() {}, status(c) { this.statusCode = c; return this; }, json(j) { resolve({ code: this.statusCode, ...j }); } };
+    dapi({ method: 'POST', body: JSON.stringify({ action, args }) }, res);
+  });
+  r = await dcall('login', ['wrong-code']);
+  assert.equal(r.ok, false);
+  r = await dcall('data', ['bad-token']);
+  assert.equal(r.ok, false);
+  r = await dcall('login', ['dash-code-123']);
+  assert.ok(r.ok, r.error);
+  const tk = r.data.token;
+  r = await dcall('data', [tk, '']);
+  assert.ok(r.ok, r.error);
+  assert.ok(book['ทะเบียนพนักงาน'] && book['ประเมินสมรรถนะ'], 'tabs created');
+  assert.equal(r.data.people.length, 0);
+  r = await dcall('importRoster', [tk, [
+    ['AGA0123', 'นายสมชาย ใจดี', 'Leader', '2020-01-15', 'A', '1', 'ลาดพร้าว', 'ทำงาน'],
+    ['AG-9', 'นายใหม่ มาก', 'Service Technician', '2027-05-01', '', 'S', 'ลาดพร้าว', ''],
+    ['=EVIL()', 'x', 'y', '', '', '', '', '']
+  ]]);
+  assert.ok(r.ok, r.error); assert.equal(r.data.added, 3);
+  assert.equal(book['ทะเบียนพนักงาน'].rows[3][0], '=EVIL()', 'formula stored as text');
+  r = await dcall('importRoster', [tk, [['AGA0123', 'ซ้ำ', 'x', '', '', '', '', '']]]);
+  assert.equal(r.data.added, 0, 'no duplicates');
+  r = await dcall('rate', [tk, { empId: 'AGA0123', rater: 'Sup', scores: { tech: 4, quality: 3, safety: 3, comm: 3, lead: 3 }, growth: 'อยากเติบโต' }]);
+  assert.equal(r.ok, false, 'missing score');
+  r = await dcall('rate', [tk, { empId: 'XX', rater: 'Sup', scores: { tech: 4, quality: 3, safety: 3, comm: 3, lead: 3, discipline: 4 } }]);
+  assert.equal(r.ok, false, 'unknown emp');
+  r = await dcall('rate', [tk, { empId: 'aga0123', rater: 'Sup', scores: { tech: 4, quality: 3, safety: 3, comm: 3, lead: 3, discipline: 4 }, growth: 'อยากเติบโต', risk: 'ต่ำ', plan: '=x' }]);
+  assert.ok(r.ok, r.error);
+  r = await dcall('data', [tk, 'ลาดพร้าว']);
+  assert.ok(r.ok, r.error);
+  const me = r.data.people.find(p => p.id === 'AGA0123');
+  assert.ok(me.exam.count >= 2, 'exam rows linked by id');
+  assert.equal(me.rating.avg, 3.3);
+  assert.equal(me.stage, 2);
+  assert.ok(r.data.branchView.gaps.length);
+  const nb = r.data.people.find(p => p.id === 'AG-9');
+  assert.equal(nb.risk.level, 'สูง');
+  console.log('dash:', r.data.people.map(p => p.name + ' ' + p.status + ' ' + p.risk.level).join(' | '));
+  console.log('gaps:', r.data.branchView.gaps.map(g => g.text).join(' / '));
   Date.now = realNow;
   console.log('ALL TESTS PASSED (' + calls.length + ' API calls)');
 })().catch(e => { console.error(e); process.exit(1); });
